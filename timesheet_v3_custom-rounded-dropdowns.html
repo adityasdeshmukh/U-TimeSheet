@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>U+ Collective Timesheet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <h1>U+ Collective Timesheet</h1>
+        <div class="header-controls">
+          <div class="pill"><span id="active-range-label">This week</span></div>
+          <input type="date" id="range-start" />
+          <input type="date" id="range-end" />
+          <button class="btn btn-ghost" id="download-csv">Download CSV</button>
+        </div>
+      </header>
+
+      <div class="tab-bar" role="tablist" aria-label="Timesheet views">
+        <button class="tab active" type="button" data-tab="log-manage" aria-selected="true">Log Time &amp; Manage</button>
+        <button class="tab" type="button" data-tab="summary" aria-selected="false">Summary Stats</button>
+        <button class="tab" type="button" data-tab="export" aria-selected="false">Export</button>
+      </div>
+
+      <div id="tab-log-manage" class="tab-panel">
+        <div class="two-column">
+          <section class="card" id="log-card">
+            <h2>Log time</h2>
+            <form id="log-form">
+              <div class="form-grid">
+                <div>
+                  <label for="employee">Employee</label>
+                  <select id="employee" required></select>
+                </div>
+                <div>
+                  <label for="project">Project</label>
+                  <select id="project" required></select>
+                </div>
+                <div>
+                  <label for="date">Date</label>
+                  <input type="date" id="date" required />
+                </div>
+                <div>
+                  <label for="start">Start time</label>
+                  <input type="time" id="start" required />
+                </div>
+                <div>
+                  <label for="end">End time</label>
+                  <input type="time" id="end" required />
+                </div>
+                <div class="form-row-full">
+                  <label for="notes">Notes (optional)</label>
+                  <textarea id="notes" placeholder="Meeting, design review, site visit, R&amp;D, etc."></textarea>
+                </div>
+              </div>
+              <div class="button-row">
+                <button type="submit" class="btn btn-primary">Log hours</button>
+                <button type="button" class="btn btn-secondary" id="clear-form">Clear</button>
+              </div>
+              <div id="log-error" class="error" style="display:none;"></div>
+            </form>
+            <div class="section-footer">
+              Time entries will appear in the table to the right and in summaries below.
+            </div>
+          </section>
+
+          <section class="card" id="manage-card">
+            <h2>Manage</h2>
+            <div class="manage-grid">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                  <h3 style="font-size:0.9rem;margin:0;">Employees</h3>
+                  <button class="btn btn-ghost" type="button" id="add-employee">Add</button>
+                </div>
+                <table id="employees-table">
+                  <thead><tr><th>Name</th><th class="actions-cell">Actions</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                  <h3 style="font-size:0.9rem;margin:0;">Projects</h3>
+                  <button class="btn btn-ghost" type="button" id="add-project">Add</button>
+                </div>
+                <table id="projects-table">
+                  <thead><tr><th>Project</th><th class="actions-cell">Actions</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="section-footer">Soft-deleted employees and projects stay in historical entries but are hidden from new time logs.</div>
+          </section>
+        </div>
+      </div>
+
+      <div id="tab-summary" class="tab-panel" hidden>
+        <section class="card" id="entries-card">
+          <h2>Entries</h2>
+          <div class="filters-row">
+            <select id="filter-employee">
+              <option value="">All employees</option>
+            </select>
+            <select id="filter-project">
+              <option value="">All projects</option>
+            </select>
+            <input type="date" id="filter-start" />
+            <input type="date" id="filter-end" />
+          </div>
+          <div class="table-wrapper">
+            <table id="entries-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Project</th>
+                  <th>Date</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Duration</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card" id="summary-card">
+          <h2>Summary</h2>
+          <div class="two-column" style="gap: 0.75rem;">
+            <div>
+              <h3 style="font-size:0.9rem;margin:0 0 0.4rem;">By employee</h3>
+              <table id="summary-employee">
+                <thead><tr><th>Employee</th><th>Hours</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style="font-size:0.9rem;margin:0 0 0.4rem;">By project</h3>
+              <table id="summary-project">
+                <thead><tr><th>Project</th><th>Hours</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="margin-top:1rem;">
+            <h3 style="font-size:0.9rem;margin:0 0 0.4rem;">By employee and project (top 5 projects)</h3>
+            <div style="overflow-x:auto;">
+              <table id="summary-employee-project">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section-footer">Summaries respect the active filters and date range.</div>
+        </section>
+      </div>
+
+      <div id="tab-export" class="tab-panel" hidden>
+        <section class="card" id="export-card">
+          <h2>Export data</h2>
+          <p>Download all current time entries as a CSV file that opens in Excel or Google Sheets.</p>
+          <button class="btn btn-primary" id="download-csv-bottom">Download CSV</button>
+        </section>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
